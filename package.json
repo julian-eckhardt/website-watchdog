@@ -1,0 +1,20 @@
+{
+  "name": "website-watchdog",
+  "version": "1.0.0",
+  "description": "A website status checker",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@git.techfuck.de:776/jeckhardt/website-watchdog.git"
+  },
+  "author": "Julian Eckhardt",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "object-hash": "^1.3.0",
+    "sqlite": "^3.0.0",
+    "telegraf": "^3.22.2"
+  }
+}
