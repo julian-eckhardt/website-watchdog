@@ -6,10 +6,14 @@ const axios = require('axios');
 const moment = require('moment')
 const SHA256 = require('crypto-js/sha256');
 const normalizeUrl = require('normalize-url');
+const schedule = require('node-schedule');
 
 // TODO: this can be deleted via npm… Still breaks stuff though…
 const getUrls = require('get-urls');
 
+//
+// CONFIG
+//=============
 const config = require('./config.json');
 
 const bot = new Telegraf(config.token);
@@ -25,6 +29,20 @@ const REPORT_DEBUG = 0;
 const REPORT_INFO = 1;
 // only report errors, otherwise stay silent
 const REPORT_ERROR = 2;
+
+//
+// SCHEDULES
+//=============
+
+// DAILY 06:30 BRIEFING
+schedule.scheduleJob('0 30 6 * * *', async function() {
+	await sendReports(REPORT_INFO)
+});
+
+// EVERY MINUTE CHECK
+schedule.scheduleJob('30 * * * * *', async function() {
+	await sendReports(REPORT_ERROR)
+});
 
 //
 // COMMANDS
@@ -135,7 +153,7 @@ createReport = async function(mode) {
 		if (testPassed && mode === REPORT_INFO) {
 			message = "✅ " + moment().format('DD.MM.YY HH:mm zz') + '\n';
 		}
-		if (mode === REPORT_ERROR || mode === REPORT_DEBUG) {
+		if ((!testPassed && mode === REPORT_ERROR) || mode === REPORT_DEBUG) {
 			message += "\n\ntimestamp: " + moment().format('DD.MM.YY HH:mm zz') + '\n';
 		}
 	}
@@ -143,6 +161,24 @@ createReport = async function(mode) {
 		message = "no target sites found";
 	}
 	return message;
+}
+
+sendReports = async function(mode) {
+	const message = await createReport(mode);
+
+	if (message !== "") {
+		const db = await dbPromise;
+		const users = await db.all('SELECT * FROM users;');
+
+		if(users.length !== 0) {
+			users.map(async function(user) {
+				telegram.sendMessage(user.id, message)
+					.catch((err) => {
+						console.log(err);
+					})
+			});
+		}
+	}
 }
 
 //
