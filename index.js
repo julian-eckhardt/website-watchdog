@@ -7,7 +7,7 @@ const moment = require('moment')
 const SHA256 = require('crypto-js/sha256');
 const normalizeUrl = require('normalize-url');
 
-// TODO: this can be deleted via npm…
+// TODO: this can be deleted via npm… Still breaks stuff though…
 const getUrls = require('get-urls');
 
 const config = require('./config.json');
@@ -15,12 +15,20 @@ const config = require('./config.json');
 const bot = new Telegraf(config.token);
 const telegram = new Telegram(config.token);
 
+//
+// REPORT MODES
+//=============
+
 // full report
 const REPORT_DEBUG = 0;
 // only report errors, otherwise just send OK Message
 const REPORT_INFO = 1;
 // only report errors, otherwise stay silent
 const REPORT_ERROR = 2;
+
+//
+// COMMANDS
+//=============
 
 bot.start((ctx) => startService(ctx));
 bot.help((ctx) => ctx.reply("Sorry, no help document defined yet!")) // TODO: Create Help Reply
@@ -42,7 +50,8 @@ bot.command("register", async function(ctx) {
 		if(entity.type === 'url'){
 			url = normalizeUrl(messageText.substr(entity.offset, entity.length));
 			const db = await dbPromise;
-			if(await db.get('SELECT * FROM target_sites WHERE site_url = ?', url)){
+			const selectUrl = await db.get('SELECT * FROM target_sites WHERE site_url = ?', url);
+			if(selectUrl){
 				ctx.reply("target site " + url + " is already registered");
 			}
 			else{
@@ -57,9 +66,13 @@ bot.command("register", async function(ctx) {
 	})
 });
 
+//
+// HELPER FUNCTIONS
+//===================
+
 listWatchedSites = async function(){
 	const db = await dbPromise;
-	const sites = db.get('SELECT site_url FROM target_sites');
+	const sites = db.get('SELECT * FROM target_sites');
 	message = "Currently watched sites:\n\n"
 
 	sites.forEach(site => {
@@ -68,12 +81,7 @@ listWatchedSites = async function(){
 
 	return messages;
 }
-/*
-registerNewPage = function (ctx) {
-	newPage = ctx.message.substring(8);
-	
-}
-*/
+
 startService = async function (ctx) {
 	const db = await dbPromise;
 	try{
@@ -94,7 +102,7 @@ createReport = async function(mode) {
 	// get sites from database
 	// assuming small n here - might change to filter by user at some point
 	const db = await dbPromise;
-	sites = await db.all('SELECT rowid, site_url, response_hash FROM target_sites');
+	const sites = await db.all('SELECT rowid, site_url, response_hash FROM target_sites');
 
 	if(sites.length !== 0){
 		const pMessageChunks = sites.map(async function (site) {
@@ -137,21 +145,14 @@ createReport = async function(mode) {
 	return message;
 }
 
-sendDailyReport = async function() {
-	const users = await db.all('SELECT * FROM users');
-	users.forEach(user => async function() {
-		telegram.sendMessage(user.id, await createReport(REPORT_ERROR));
-	});
-}
+//
+// INIT SEQUENCE
+//===================
 
 const dbPromise = Promise.resolve()
 	.then(() => sqlite.open('./database.sqlite', { Promise }))
-	// PICK YOUR DESIRED MIGRATION
-	// ===========================
 	.then(db => db.migrate())
-	//.then(db => db.migrate({ force: 'last' }))
-	// ===========================
 	.catch((err) => console.error(err.stack))
 	.then(console.log("connected to database.sqlite"))
 	.then(console.log("starting to poll for messages - startup squence completed"))
-	.finally(() => bot.startPolling());
+	.finally(() => bot.startPolling())
