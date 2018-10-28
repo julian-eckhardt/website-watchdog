@@ -1,17 +1,18 @@
 {
   "name": "website-watchdog",
   "version": "1.0.0",
-  "description": "A website status checker",
+  "description": "A telegram bot for website monitoring",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
     "url": "ssh://git@git.techfuck.de:776/jeckhardt/website-watchdog.git"
   },
   "author": "Julian Eckhardt",
-  "license": "UNLICENSED",
+  "license": "GPL-2.0-only",
   "dependencies": {
     "axios": "^0.18.0",
     "bluebird": "^3.5.2",

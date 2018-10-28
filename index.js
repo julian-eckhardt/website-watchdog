@@ -1,3 +1,21 @@
+/*
+website-watchdog - a telegram bot for website monitoring
+Copyright (c) 2018  Julian Eckhardt
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of version 2 of the GNU General Public License
+as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
 const sqlite = require('sqlite');
 const Telegraf = require('telegraf');
 const Telegram = require('telegraf/telegram');
@@ -34,14 +52,14 @@ const REPORT_ERROR = 2;
 // SCHEDULES
 //=============
 
-// DAILY 06:30 BRIEFING
-schedule.scheduleJob('0 30 6 * * *', async function() {
-	await sendReports(REPORT_INFO)
+// DAILY 04:30 (SYSTEM TIME UTC) BRIEFING
+schedule.scheduleJob('0 30 4 * * *', async function() {
+	await sendReports(REPORT_INFO);
 });
 
-// EVERY MINUTE CHECK
-schedule.scheduleJob('30 * * * * *', async function() {
-	await sendReports(REPORT_ERROR)
+// EVERY 20 MINUTE CHECK
+schedule.scheduleJob('0 */20 * * * *', async function() {
+	await sendReports(REPORT_ERROR);
 });
 
 //
@@ -49,7 +67,7 @@ schedule.scheduleJob('30 * * * * *', async function() {
 //=============
 
 bot.start((ctx) => startService(ctx));
-bot.help((ctx) => ctx.reply("Sorry, no help document defined yet!")) // TODO: Create Help Reply
+bot.help((ctx) => ctx.reply(help));
 
 bot.command("scan", async function(ctx) {
 	report = await createReport(REPORT_DEBUG);
@@ -191,4 +209,9 @@ const dbPromise = Promise.resolve()
 	.catch((err) => console.error(err.stack))
 	.then(console.log("connected to database.sqlite"))
 	.then(console.log("starting to poll for messages - startup squence completed"))
-	.finally(() => bot.startPolling())
+	.finally(() => bot.startPolling());
+
+//
+// HELP DOCUMENT
+//===================
+help = "website-watchdog v0.1.0\n\nCommands:\n\\scan -> perform full scan\n\\list -> list all watched sites\n\\register <url> -> add new site\n\\help -> this help document";
