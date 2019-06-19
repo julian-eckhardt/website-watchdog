@@ -88,15 +88,15 @@ bot.command("register", async function(ctx) {
 			const db = await dbPromise;
 			const selectUrl = await db.get('SELECT * FROM target_sites WHERE site_url = ?', url);
 			if(selectUrl){
-				ctx.reply("target site " + url + " is already registered");
+				ctx.reply(`target site ${url} is already registered`);
 			}
 			else{
 				response = await axios.get(url);
 				hash = SHA256(response);
 
 				db.run('INSERT INTO target_sites (site_url, response_hash) VALUES ($url, $hash)', {$url: url, $hash: hash})
-					.catch((err) => ctx.reply("could not persist new target site " + url + ": \n" + err))
-					.then(ctx.reply("successfully registered " + url));
+					.catch((err) => ctx.reply(`could not persist new target site ${url}\n: ${err}`))
+					.then(ctx.reply(`successfully registered ${url}`));
 			}
 		}
 	})
@@ -145,20 +145,20 @@ createReport = async function(mode) {
 			messageChunk = "";
 			response = await axios.get(site.site_url)
 				.catch((err) => {
-					messageChunk = ("❌ " + site.site_url + " (HTTP Error)\n");
+					messageChunk = (`❌ ${site.site_url} (HTTP Error)\n\n ${err}`);
 					testPassed = false;
 				});
-			response_hash_new = SHA256(response).toString();
+			response_hash_new = SHA256(response.data).toString();
 
 			if (response_hash_new !== site.response_hash) {
-				messageChunk = ("⚠️ " + site.site_url + " (content changed)\n");
+				messageChunk = (`⚠️ ${site.site_url} (content changed)\n`);
 				testPassed = false;
 
 				await db.run('UPDATE target_sites SET response_hash = $response_hash WHERE rowid = $rowid', {$rowid: site.rowid, $response_hash: response_hash_new})
 					.catch(err => console.log(err));
 			}
 			else if (mode === REPORT_DEBUG) {
-				messageChunk = ("✅ " + site.site_url + "\n");
+				messageChunk = (`✅ ${site.site_url}\n`);
 			}
 			return messageChunk;
 		});
@@ -169,10 +169,10 @@ createReport = async function(mode) {
 		}
 
 		if (testPassed && mode === REPORT_INFO) {
-			message = "✅ " + moment().format('DD.MM.YY HH:mm zz') + '\n';
+			message = `✅ ${moment().format('DD.MM.YY HH:mm zz')}\n`;
 		}
 		if ((!testPassed && mode === REPORT_ERROR) || mode === REPORT_DEBUG) {
-			message += "\n\ntimestamp: " + moment().format('DD.MM.YY HH:mm zz') + '\n';
+			message += `\n\ntimestamp: ${moment().format('DD.MM.YY HH:mm zz')}\n`;
 		}
 	}
 	else {
@@ -214,4 +214,4 @@ const dbPromise = Promise.resolve()
 //
 // HELP DOCUMENT
 //===================
-help = "website-watchdog v0.1.0\n\nCommands:\n\\scan -> perform full scan\n\\list -> list all watched sites\n\\register <url> -> add new site\n\\help -> this help document";
+help = "website-watchdog v0.1.0\n\nCommands:\n/scan -> perform full scan\n/list -> list all watched sites\n/register <url> -> add new site\n/help -> this help document";
