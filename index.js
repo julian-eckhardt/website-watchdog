@@ -49,8 +49,12 @@ const REPORT_ERROR = 2;
 //
 // HELP DOCUMENT
 // ===================
-const help =
-	'website-watchdog v0.1.0\n\nCommands:\n/scan -> perform full scan\n/list -> list all watched sites\n/register <url> -> add new site\n/help -> this help document';
+const help = `website-watchdog v1.0.1\n\n
+Commands:\n
+/scan -> perform full scan\n
+/list -> list all watched sites\n
+/register <url> -> add new site\n
+/help -> this help document`;
 
 //
 // INIT SEQUENCE
