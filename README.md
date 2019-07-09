@@ -18,8 +18,8 @@ users to give confirmation that it is still running and able to send messages.
 - run `npm start` 
 
 ## Bot commands
-- `\start`: subscribe
-- `\register <url>`: start watching `<url>` 
-- `\list`: list watched sites
-- `\scan`: invoke scan and return full report of all watched sites
-- `\help`: display help document
+- `/start`: subscribe
+- `/register <url>`: start watching `<url>` 
+- `/list`: list watched sites
+- `/scan`: invoke scan and return full report of all watched sites
+- `/help`: display help document

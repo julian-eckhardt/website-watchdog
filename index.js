@@ -49,7 +49,7 @@ const REPORT_ERROR = 2;
 //
 // HELP DOCUMENT
 // ===================
-const help = `website-watchdog v1.0.1\n\n
+const help = `website-watchdog v1.0.2\n\n
 Commands:\n
 /scan -> perform full scan\n
 /list -> list all watched sites\n
