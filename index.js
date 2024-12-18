@@ -78,8 +78,7 @@ try {
 // HELPER FUNCTIONS
 // ===================
 
-async function listWatchedSites() {
-	await checkAuth();
+async function listWatchedSites(ctx) {
 	const sites = await db.all('SELECT * FROM target_sites');
 	let message = 'Currently watched sites:\n\n';
 
@@ -92,7 +91,7 @@ async function listWatchedSites() {
 
 async function startService(ctx) {
 	try {
-		await checkAuth();
+		await checkAuth(ctx);
 		db.run('INSERT OR REPLACE INTO users (id, first_name) VALUES ($id, $firstName)', {
 			$id: ctx.chat.id,
 			$firstName: ctx.chat.first_name,
@@ -191,7 +190,7 @@ bot.start((ctx) => startService(ctx));
 bot.help((ctx) => ctx.reply(help));
 
 bot.command('scan', async (ctx) => {
-	await checkAuth();
+	await checkAuth(ctx);
 	try {
 		console.log('SCAN command fired');
 		const report = await createReport(REPORT_DEBUG);
@@ -203,7 +202,7 @@ bot.command('scan', async (ctx) => {
 
 bot.command('register', async (ctx) => {
 	try {
-		await checkAuth();
+		await checkAuth(ctx);
 		// get message parts
 		const messageEntities = ctx.message.entities;
 		const messageText = ctx.message.text;
@@ -236,7 +235,7 @@ bot.command('register', async (ctx) => {
 
 bot.command('list', async (ctx) => {
 	try {
-		await checkAuth();
+		await checkAuth(ctx);
 		ctx.reply(await listWatchedSites());
 	} catch (err) {
 		ctx.reply(err.message);
