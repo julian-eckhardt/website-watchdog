@@ -115,7 +115,7 @@ async function createReport(mode) {
 	console.log(sites);
 
 	if (sites.length !== 0) {
-		const pMessageChunks = sites.map(async (site) => {
+		const messageChunkPromises = sites.map(async (site) => {
 			let messageChunk = '';
 
 			try {
@@ -125,8 +125,15 @@ async function createReport(mode) {
 				// use combined text contents of whole page as content and hash it
 				const responseHashNew = sha256($.text()).toString();
 
+				if (site.error) {
+					messageChunk = `✅ ${site.site_url} (error cleared)\n`;
+					testPassed = true;
+					await db.run('UPDATE target_sites SET error = NULL WHERE rowid = $rowid', {
+						$rowid: site.rowid,
+					});
+				}
 				if (responseHashNew !== site.response_hash) {
-					messageChunk = `⚠️ ${site.site_url} (content changed)\n`;
+					messageChunk += `⚠️ ${site.site_url} (content changed)\n`;
 					testPassed = false;
 
 					await db
@@ -135,18 +142,30 @@ async function createReport(mode) {
 							$response_hash: responseHashNew,
 						})
 						.catch((err) => console.log(err));
-				} else if (mode === REPORT_DEBUG) {
+				}
+				if (mode === REPORT_DEBUG && messageChunk === '') {
 					messageChunk = `✅ ${site.site_url}\n`;
 				}
 			} catch (err) {
-				messageChunk = `❌ ${site.site_url} (HTTP Error)\n\n ${err.toString()}`;
-				testPassed = false;
+				if (site.error === err.toString()) {
+					if (mode === REPORT_DEBUG) {
+						testPassed = false;
+						messageChunk = `❌ ${site.site_url} HTTP Error: ${err.toString()} (already reported)\n`;
+					}
+				} else {
+					await db.run('UPDATE target_sites SET error = $error WHERE rowid = $rowid', {
+						$rowid: site.rowid,
+						$error: `${err.toString()}`,
+					});
+					messageChunk = `❌ ${site.site_url} (HTTP Error)\n\n ${err.toString()}`;
+					testPassed = false;
+				}
 			}
 
 			return messageChunk;
 		});
 
-		const messageChunks = await Promise.all(pMessageChunks);
+		const messageChunks = await Promise.all(messageChunkPromises);
 		if (messageChunks) {
 			messageChunks.forEach((chunk) => {
 				message += chunk;
